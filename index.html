@@ -1,280 +1,8 @@
-<!doctype html>
-<html lang="pt-BR">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Suporte More Buzz</title>
-  <style>
-    :root{
-      --bg:#070718;
-      --panel:#0b0b22;
-      --panel2:#0f0f2b;
-      --text:#e8e8ff;
-      --muted:#b7b7d6;
-      --chip:#1a1a3c;
-      --chipBorder:#2a2a55;
-      --accent:#7c3aed;
-      --accent2:#a78bfa;
-      --danger:#ef4444;
-      --ok:#22c55e;
-      --shadow:0 18px 60px rgba(0,0,0,.55);
-      --radius:18px;
-      --radius2:26px;
-      --font: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Noto Sans", "Helvetica Neue", sans-serif;
-    }
-    *{box-sizing:border-box}
-    body{
-      margin:0;
-      font-family:var(--font);
-      background:radial-gradient(1200px 600px at 25% 10%, rgba(124,58,237,.22), transparent 60%),
-                 radial-gradient(900px 500px at 85% 30%, rgba(167,139,250,.18), transparent 55%),
-                 var(--bg);
-      color:var(--text);
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      min-height:100vh;
-      padding:22px;
-    }
-    .app{
-      width:min(1100px, 100%);
-      height:min(760px, 100vh - 44px);
-      background:linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
-      border:1px solid rgba(255,255,255,.08);
-      border-radius:var(--radius2);
-      box-shadow:var(--shadow);
-      overflow:hidden;
-      display:flex;
-      flex-direction:column;
-    }
-    .header{
-      padding:18px 22px;
-      background:linear-gradient(90deg, rgba(124,58,237,.35), rgba(0,0,0,0));
-      border-bottom:1px solid rgba(255,255,255,.08);
-      display:flex;
-      align-items:center;
-      gap:12px;
-    }
-    .logo{
-      width:40px;height:40px;border-radius:14px;
-      background:radial-gradient(circle at 30% 30%, #fbbf24, transparent 55%),
-                 radial-gradient(circle at 70% 70%, #7c3aed, #3b0764);
-      display:grid;place-items:center;
-      font-weight:800;
-      letter-spacing:.5px;
-    }
-    .title{ font-size:18px; font-weight:700; }
-    .chat{
-      padding:18px;
-      flex:1;
-      overflow:auto;
-      background:linear-gradient(180deg, rgba(15,15,43,.55), rgba(8,8,24,.65));
-    }
-    .row{ display:flex; gap:10px; margin:10px 0; align-items:flex-end; }
-    .row.bot{ justify-content:flex-start; }
-    .row.user{ justify-content:flex-end; }
-    .bubble{
-      max-width:min(680px, 92%);
-      background:rgba(255,255,255,.06);
-      border:1px solid rgba(255,255,255,.08);
-      border-radius:16px;
-      padding:12px 14px;
-      line-height:1.35;
-      color:var(--text);
-      backdrop-filter: blur(10px);
-    }
-    .row.user .bubble{
-      background:linear-gradient(180deg, rgba(124,58,237,.85), rgba(124,58,237,.55));
-      border-color:rgba(167,139,250,.45);
-    }
-    .time{ font-size:12px; color:rgba(255,255,255,.55); margin:0 6px 2px; }
-    .chips{ display:flex; flex-wrap:wrap; gap:10px; margin-top:10px; }
-    .chip{
-      border:1px solid rgba(255,255,255,.12);
-      background:rgba(255,255,255,.04);
-      color:var(--text);
-      padding:10px 14px;
-      border-radius:999px;
-      cursor:pointer;
-      user-select:none;
-      transition:.15s ease;
-      font-weight:600;
-      font-size:14px;
-    }
-    .chip:hover{
-      transform:translateY(-1px);
-      border-color:rgba(167,139,250,.55);
-      background:rgba(124,58,237,.10);
-    }
-    .chip.primary{
-      background:rgba(124,58,237,.20);
-      border-color:rgba(167,139,250,.45);
-    }
-    .card{
-      background:rgba(255,255,255,.04);
-      border:1px solid rgba(255,255,255,.08);
-      border-radius:18px;
-      padding:14px;
-      margin-top:10px;
-    }
-    .card h4{ margin:0 0 8px; font-size:14px; color:var(--muted); font-weight:700; letter-spacing:.2px; }
-    .card p{ margin:0; color:var(--text); }
-
-    .modalWrap{
-      position:fixed; inset:0;
-      display:none;
-      background:rgba(0,0,0,.55);
-      align-items:center;
-      justify-content:center;
-      padding:22px;
-      z-index:50;
-    }
-    .modal{
-      width:min(720px, 100%);
-      background:linear-gradient(180deg, rgba(15,15,43,.98), rgba(10,10,28,.98));
-      border:1px solid rgba(255,255,255,.10);
-      border-radius:22px;
-      box-shadow:var(--shadow);
-      overflow:hidden;
-    }
-    .modalHeader{
-      padding:16px 18px;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      border-bottom:1px solid rgba(255,255,255,.08);
-      background:linear-gradient(90deg, rgba(124,58,237,.30), rgba(0,0,0,0));
-    }
-    .modalHeader strong{ font-size:15px }
-    .closeBtn{
-      border:none;
-      background:rgba(255,255,255,.08);
-      color:var(--text);
-      width:36px;height:36px;
-      border-radius:12px;
-      cursor:pointer;
-      font-size:18px;
-    }
-    .modalBody{ padding:16px 18px; }
-    .grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
-    .field{ display:flex; flex-direction:column; gap:6px; }
-    label{ font-size:13px; color:var(--muted); font-weight:700; }
-    input, select, textarea{
-      border-radius:14px;
-      border:1px solid rgba(255,255,255,.12);
-      background:rgba(255,255,255,.05);
-      color:var(--text);
-      padding:10px 12px;
-      outline:none;
-      font-family:var(--font);
-    }
-    textarea{ min-height:110px; resize:vertical; }
-    .modalFooter{
-      padding:14px 18px;
-      border-top:1px solid rgba(255,255,255,.08);
-      display:flex;
-      gap:10px;
-      justify-content:flex-end;
-    }
-    .btn{
-      border:none;
-      border-radius:14px;
-      padding:10px 14px;
-      font-weight:800;
-      cursor:pointer;
-      color:var(--text);
-      background:rgba(255,255,255,.10);
-    }
-    .btn.primary{
-      background:linear-gradient(180deg, rgba(124,58,237,.95), rgba(124,58,237,.65));
-      border:1px solid rgba(167,139,250,.45);
-    }
-    .btn.danger{
-      background:rgba(239,68,68,.22);
-      border:1px solid rgba(239,68,68,.45);
-    }
-    .note{
-      font-size:12px;
-      color:rgba(255,255,255,.65);
-      margin-top:8px;
-      line-height:1.35;
-    }
-    @media (max-width:720px){
-      .grid{ grid-template-columns:1fr; }
-    }
-  </style>
-</head>
-<body>
-  <div class="app">
-    <div class="header">
-      <div class="logo">mb</div>
-      <div class="title">Suporte More Buzz</div>
-    </div>
-    <div id="chat" class="chat"></div>
-  </div>
-
-  <div id="modalWrap" class="modalWrap">
-    <div class="modal">
-      <div class="modalHeader">
-        <strong>Abertura de Chamado</strong>
-        <button class="closeBtn" id="closeModalBtn">×</button>
-      </div>
-      <form id="ticketForm">
-        <div class="modalBody">
-          <div class="grid">
-            <div class="field">
-              <label>Nome completo</label>
-              <input name="nomeCompleto" required />
-            </div>
-            <div class="field">
-              <label>E-mail</label>
-              <input name="email" type="email" required />
-            </div>
-            <div class="field">
-              <label>Telefone</label>
-              <input name="telefone" required />
-            </div>
-            <div class="field">
-              <label>Tipo de solicitação</label>
-              <select name="tipoSolicitacao" required>
-                <option value="">Selecione</option>
-                <option value="duvida">Dúvida</option>
-                <option value="erro">Erro</option>
-                <option value="acesso">Acesso</option>
-                <option value="pagamento">Pagamento</option>
-                <option value="outro">Outro</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="field" style="margin-top:12px;">
-            <label>Descrição</label>
-            <textarea name="descricao" placeholder="Descreva o que está acontecendo (passo a passo)"></textarea>
-            <div class="note">Se tiver evidência (print, vídeo, arquivo), envie abaixo.</div>
-          </div>
-
-          <div class="field" style="margin-top:10px;">
-            <label>Evidência (opcional)</label>
-            <input name="evidencia" type="file" />
-          </div>
-        </div>
-
-        <div class="modalFooter">
-          <button type="button" class="btn danger" id="cancelTicketBtn">Cancelar</button>
-          <button type="submit" class="btn primary">Enviar chamado</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
 <script>
   // ========= Endpoints =========
-  // Default (PRODUÇÃO): /webhook
   const DEFAULT_GUIDE  = "https://n8n.srv1000189.hstgr.cloud/webhook/mb/guia";
   const DEFAULT_TICKET = "https://n8n.srv1000189.hstgr.cloud/webhook/mb/chamado";
 
-  // Permite sobrescrever via querystring:
-  // ?guide=https://.../webhook/mb/guia&ticket=https://.../webhook/mb/chamado
   const qs = new URLSearchParams(location.search);
   let GUIDE_ENDPOINT  = qs.get("guide")  || DEFAULT_GUIDE;
   let TICKET_ENDPOINT = qs.get("ticket") || DEFAULT_TICKET;
@@ -284,6 +12,14 @@
   const closeModalBtn = document.getElementById("closeModalBtn");
   const cancelTicketBtn = document.getElementById("cancelTicketBtn");
   const ticketForm = document.getElementById("ticketForm");
+
+  // ======== Estado de UI (para não duplicar menus) ========
+  const UI_STATE = {
+    lastCategoriesBubble: null,
+    lastTopicsBubble: null,
+    selectedCategoryId: null,
+    selectedCategoryLabel: null,
+  };
 
   function nowTime(){
     const d = new Date();
@@ -339,6 +75,16 @@
     return bubble;
   }
 
+  function disableChipsBubble(bubble){
+    if(!bubble) return;
+    const chips = bubble.querySelectorAll(".chip");
+    chips.forEach(chip => {
+      chip.style.opacity = "0.55";
+      chip.style.pointerEvents = "none";
+      chip.style.filter = "grayscale(0.2)";
+    });
+  }
+
   function addCard(title, text){
     return addRow("bot", `
       <div class="card">
@@ -358,7 +104,10 @@
     return { ok: res.ok, status: res.status, data };
   }
 
-  function normalizeTopics(data){
+  // ======== Normalizers (ajuste principal aqui) ========
+
+  // Para list_topics: ACEITA SOMENTE data.topics
+  function normalizeTopicsFromListTopics(data){
     if(!data) return [];
     if(Array.isArray(data.topics)){
       return data.topics.map(t => ({
@@ -366,12 +115,7 @@
         title: t.title ?? t.label ?? String(t.topicId ?? t.id ?? "")
       })).filter(t => t.topicId);
     }
-    if(Array.isArray(data.options)){
-      return data.options.map(o => ({
-        topicId: o.id,
-        title: o.label ?? String(o.id ?? "")
-      })).filter(t => t.topicId);
-    }
+    // NÃO aceitar "options" aqui, porque isso está duplicando categoria no front
     return [];
   }
 
@@ -407,22 +151,32 @@
   function buildGuideMenu(){
     addUser("Guia rápido");
     addBot("Certo — me diz o que você quer entender 👇");
-    addChips("bot", "Escolha um tema:", CATEGORIES.map(c => ({
+
+    const bubble = addChips("bot", "Escolha um tema:", CATEGORIES.map(c => ({
       label: c.label,
       onClick: () => buildTopicsMenu(c.id, c.label)
     })));
+
+    UI_STATE.lastCategoriesBubble = bubble;
   }
 
   async function buildTopicsMenu(categoryId, categoryLabel){
+    // registra seleção atual
+    UI_STATE.selectedCategoryId = categoryId;
+    UI_STATE.selectedCategoryLabel = categoryLabel;
+
+    // desabilita o menu anterior (evita re-cliques e “duplicar etapa”)
+    disableChipsBubble(UI_STATE.lastCategoriesBubble);
+
     addUser(categoryLabel);
 
-    const { ok, data } = await postJSON(GUIDE_ENDPOINT, {
+    const { ok, data, status } = await postJSON(GUIDE_ENDPOINT, {
       action: "list_topics",
       categoryId
     });
 
     if(!ok){
-      addBot(`Falha ao carregar perguntas. Status: ${data?.status || ""}`);
+      addBot(`Falha ao carregar perguntas. Status: ${status}`);
       addChips("bot","O que você prefere?",[
         {label:"Tentar de novo", primary:true, onClick:()=> buildTopicsMenu(categoryId, categoryLabel)},
         {label:"Abrir chamado", onClick:()=> openTicketModal()}
@@ -430,10 +184,11 @@
       return;
     }
 
-    const topics = normalizeTopics(data);
+    const topics = normalizeTopicsFromListTopics(data);
 
+    // Se vier vazio, não renderiza categorias de novo; mostra fallback correto
     if(!topics.length){
-      addBot("Não encontrei perguntas nesse tema. Quer abrir um chamado?");
+      addBot("Não encontrei perguntas nesse tema (ou a base retornou um formato diferente). Quer abrir um chamado?");
       addChips("bot","Escolha:",[
         {label:"Abrir chamado", primary:true, onClick:()=> openTicketModal()},
         {label:"Voltar ao guia", onClick:()=> buildGuideMenu()}
@@ -441,13 +196,18 @@
       return;
     }
 
-    addChips("bot", "Beleza — selecione uma opção:", topics.map(t => ({
+    const bubble = addChips("bot", "Beleza — selecione uma opção:", topics.map(t => ({
       label: t.title,
       onClick: () => answerTopic(t.topicId, t.title)
     })));
+
+    UI_STATE.lastTopicsBubble = bubble;
   }
 
   async function answerTopic(topicId, title){
+    // desabilita lista de tópicos anterior (opcional, mas ajuda UX)
+    disableChipsBubble(UI_STATE.lastTopicsBubble);
+
     addUser(title);
 
     const { ok, data } = await postJSON(GUIDE_ENDPOINT, {
@@ -569,5 +329,3 @@
 
   start();
 </script>
-</body>
-</html>
