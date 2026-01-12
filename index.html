@@ -697,15 +697,15 @@
     const { options } = normalizeSearch(data);
 
     if(!options.length){
-      addBot("Não encontrei nada muito parecido na FAQ. Quer abrir um chamado?");
-      addChips("bot","Escolha:",[
-        {label:"Abrir chamado", primary:true, onClick:()=> openTicketModal()},
-        {label:"Ver temas", onClick:()=> buildGuideMenu()}
-      ]);
-      isSearching = false;
-      sendBtn.disabled = false;
-      return;
-    }
+  addBot("Não entendi sua dúvida. Reescreva ou selecione uma das opções abaixo.");
+  addChips("bot","Escolha uma opção:",[
+    {label:"Guia rápido", primary:true, onClick:()=> buildGuideMenu()},
+    {label:"Abrir chamado", onClick:()=> openTicketModal()}
+  ]);
+  isSearching = false;
+  sendBtn.disabled = false;
+  return;
+}
 
     addBot("Encontrei estes tópicos relacionados 👇");
     addChips("bot","Selecione uma opção:", options.map(o => ({
