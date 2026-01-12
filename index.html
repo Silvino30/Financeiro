@@ -38,7 +38,7 @@
     }
     .app{
       width:min(1100px, 100%);
-      height:min(760px, 100vh - 44px);
+      height:min(760px, calc(100vh - 44px));
       background:linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
       border:1px solid rgba(255,255,255,.08);
       border-radius:var(--radius2);
@@ -64,12 +64,14 @@
       letter-spacing:.5px;
     }
     .title{ font-size:18px; font-weight:700; }
+
     .chat{
       padding:18px;
       flex:1;
       overflow:auto;
       background:linear-gradient(180deg, rgba(15,15,43,.55), rgba(8,8,24,.65));
     }
+
     .row{ display:flex; gap:10px; margin:10px 0; align-items:flex-end; }
     .row.bot{ justify-content:flex-start; }
     .row.user{ justify-content:flex-end; }
@@ -88,6 +90,7 @@
       border-color:rgba(167,139,250,.45);
     }
     .time{ font-size:12px; color:rgba(255,255,255,.55); margin:0 6px 2px; }
+
     .chips{ display:flex; flex-wrap:wrap; gap:10px; margin-top:10px; }
     .chip{
       border:1px solid rgba(255,255,255,.12);
@@ -110,6 +113,7 @@
       background:rgba(124,58,237,.20);
       border-color:rgba(167,139,250,.45);
     }
+
     .card{
       background:rgba(255,255,255,.04);
       border:1px solid rgba(255,255,255,.08);
@@ -119,6 +123,41 @@
     }
     .card h4{ margin:0 0 8px; font-size:14px; color:var(--muted); font-weight:700; letter-spacing:.2px; }
     .card p{ margin:0; color:var(--text); }
+
+    /* ✅ Composer dentro da app */
+    .composer{
+      border-top:1px solid rgba(255,255,255,.08);
+      background:linear-gradient(180deg, rgba(11,11,34,.95), rgba(7,7,24,.95));
+      padding:12px 14px;
+      display:flex;
+      gap:10px;
+      align-items:center;
+    }
+    .composer input{
+      flex:1;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.12);
+      background:rgba(255,255,255,.05);
+      color:var(--text);
+      padding:12px 12px;
+      outline:none;
+      font-family:var(--font);
+    }
+    .composer button{
+      border:none;
+      border-radius:14px;
+      padding:12px 14px;
+      font-weight:800;
+      cursor:pointer;
+      color:var(--text);
+      background:linear-gradient(180deg, rgba(124,58,237,.95), rgba(124,58,237,.65));
+      border:1px solid rgba(167,139,250,.45);
+      white-space:nowrap;
+    }
+    .composer button:disabled{
+      opacity:.55;
+      cursor:not-allowed;
+    }
 
     .modalWrap{
       position:fixed; inset:0;
@@ -210,7 +249,14 @@
       <div class="logo">mb</div>
       <div class="title">Suporte More Buzz</div>
     </div>
+
     <div id="chat" class="chat"></div>
+
+    <!-- ✅ Input fixo no rodapé (dentro do app) -->
+    <div class="composer">
+      <input id="msgInput" placeholder="Digite sua dúvida (ex.: como resgatar recompensas?)" />
+      <button id="sendBtn">Enviar</button>
+    </div>
   </div>
 
   <div id="modalWrap" class="modalWrap">
@@ -281,8 +327,11 @@
   const closeModalBtn = document.getElementById("closeModalBtn");
   const cancelTicketBtn = document.getElementById("cancelTicketBtn");
   const ticketForm = document.getElementById("ticketForm");
+  const msgInput = document.getElementById("msgInput");
+  const sendBtn  = document.getElementById("sendBtn");
 
-  let isLoadingGuide = false; // evita clique duplo e “duplicações” por corrida
+  let isSearching = false;
+  let isLoadingGuide = false;
 
   function nowTime(){
     const d = new Date();
@@ -357,7 +406,6 @@
     return { ok: res.ok, status: res.status, data };
   }
 
-  // --------- Normalizers (inclui categorias vindas do back) ---------
   function normalizeCategories(data){
     if(!data) return [];
     if(Array.isArray(data.categories)){
@@ -366,7 +414,6 @@
         label: c.label ?? c.title ?? String(c.id ?? c.categoryId ?? "")
       })).filter(c => c.id);
     }
-    // fallback caso o back use "options"
     if(Array.isArray(data.options)){
       return data.options.map(o => ({
         id: o.id ?? o.categoryId,
@@ -405,18 +452,28 @@
     return data?.detail || data?.answer_full || data?.answer || "";
   }
 
-  // ========= Fluxo =========
+  function normalizeSearch(data){
+    if(!data) return { options: [], confidence: 0 };
+    const options = Array.isArray(data.options) ? data.options : [];
+    return {
+      confidence: Number(data.confidence ?? 0),
+      options: options
+        .map(o => ({
+          topicId: o.id ?? o.topicId,
+          title: o.label ?? o.title ?? String(o.id ?? o.topicId ?? "")
+        }))
+        .filter(o => o.topicId)
+    };
+  }
 
   function start(){
     addBot("Olá! 👋 Eu sou o suporte da More Buzz. Como você quer seguir?");
-    // ✅ FRONT SÓ MONTA ATÉ AQUI (Escolha uma opção)
     addChips("bot", "Escolha uma opção:", [
       { label:"Guia rápido", primary:true, onClick: () => buildGuideMenu() },
       { label:"Abrir chamado", onClick: () => openTicketModal() },
     ]);
   }
 
-  // ✅ Agora o menu de categorias vem do BACK (list_categories)
   async function buildGuideMenu(){
     if(isLoadingGuide) return;
     isLoadingGuide = true;
@@ -611,7 +668,83 @@
     ]);
   });
 
+  async function searchFAQ(query){
+    const q = String(query || "").trim();
+    if(!q) return;
+
+    if(isSearching) return;
+    isSearching = true;
+    sendBtn.disabled = true;
+
+    addUser(q);
+
+    const { ok, data, status } = await postJSON(GUIDE_ENDPOINT, {
+      action: "search",
+      query: q
+    });
+
+    if(!ok){
+      addBot(`Não consegui pesquisar agora. Status: ${status}`);
+      addChips("bot","Como você quer seguir?",[
+        {label:"Guia rápido", primary:true, onClick:()=> buildGuideMenu()},
+        {label:"Abrir chamado", onClick:()=> openTicketModal()}
+      ]);
+      isSearching = false;
+      sendBtn.disabled = false;
+      return;
+    }
+
+    const { options } = normalizeSearch(data);
+
+    if(!options.length){
+      addBot("Não encontrei nada muito parecido na FAQ. Quer abrir um chamado?");
+      addChips("bot","Escolha:",[
+        {label:"Abrir chamado", primary:true, onClick:()=> openTicketModal()},
+        {label:"Ver temas", onClick:()=> buildGuideMenu()}
+      ]);
+      isSearching = false;
+      sendBtn.disabled = false;
+      return;
+    }
+
+    addBot("Encontrei estes tópicos relacionados 👇");
+    addChips("bot","Selecione uma opção:", options.map(o => ({
+      label: o.title,
+      onClick: () => answerTopic(o.topicId, o.title)
+    })));
+
+    isSearching = false;
+    sendBtn.disabled = false;
+  }
+
+  function handleSend(){
+    const text = (msgInput.value || "").trim();
+    if(!text) return;
+
+    msgInput.value = "";
+
+    if(text === "/guia"){
+      buildGuideMenu();
+      return;
+    }
+    if(text === "/chamado"){
+      openTicketModal();
+      return;
+    }
+
+    searchFAQ(text);
+  }
+
+  sendBtn.addEventListener("click", handleSend);
+  msgInput.addEventListener("keydown", (e)=>{
+    if(e.key === "Enter"){
+      e.preventDefault();
+      handleSend();
+    }
+  });
+
   start();
+  msgInput.focus();
 </script>
 </body>
 </html>
