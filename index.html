@@ -63,22 +63,14 @@
       font-weight:800;
       letter-spacing:.5px;
     }
-    .title{
-      font-size:18px;
-      font-weight:700;
-    }
+    .title{ font-size:18px; font-weight:700; }
     .chat{
       padding:18px;
       flex:1;
       overflow:auto;
       background:linear-gradient(180deg, rgba(15,15,43,.55), rgba(8,8,24,.65));
     }
-    .row{
-      display:flex;
-      gap:10px;
-      margin:10px 0;
-      align-items:flex-end;
-    }
+    .row{ display:flex; gap:10px; margin:10px 0; align-items:flex-end; }
     .row.bot{ justify-content:flex-start; }
     .row.user{ justify-content:flex-end; }
     .bubble{
@@ -95,17 +87,8 @@
       background:linear-gradient(180deg, rgba(124,58,237,.85), rgba(124,58,237,.55));
       border-color:rgba(167,139,250,.45);
     }
-    .time{
-      font-size:12px;
-      color:rgba(255,255,255,.55);
-      margin:0 6px 2px;
-    }
-    .chips{
-      display:flex;
-      flex-wrap:wrap;
-      gap:10px;
-      margin-top:10px;
-    }
+    .time{ font-size:12px; color:rgba(255,255,255,.55); margin:0 6px 2px; }
+    .chips{ display:flex; flex-wrap:wrap; gap:10px; margin-top:10px; }
     .chip{
       border:1px solid rgba(255,255,255,.12);
       background:rgba(255,255,255,.04);
@@ -137,7 +120,6 @@
     .card h4{ margin:0 0 8px; font-size:14px; color:var(--muted); font-weight:700; letter-spacing:.2px; }
     .card p{ margin:0; color:var(--text); }
 
-    /* Modal */
     .modalWrap{
       position:fixed; inset:0;
       display:none;
@@ -174,11 +156,7 @@
       font-size:18px;
     }
     .modalBody{ padding:16px 18px; }
-    .grid{
-      display:grid;
-      grid-template-columns:1fr 1fr;
-      gap:12px;
-    }
+    .grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
     .field{ display:flex; flex-direction:column; gap:6px; }
     label{ font-size:13px; color:var(--muted); font-weight:700; }
     input, select, textarea{
@@ -232,11 +210,9 @@
       <div class="logo">mb</div>
       <div class="title">Suporte More Buzz</div>
     </div>
-
     <div id="chat" class="chat"></div>
   </div>
 
-  <!-- Modal Chamado -->
   <div id="modalWrap" class="modalWrap">
     <div class="modal">
       <div class="modalHeader">
@@ -293,21 +269,16 @@
 
 <script>
   // ========= Endpoints =========
-  // ✅ OPÇÃO B: cole aqui as URLs de PRODUÇÃO do n8n (ou do seu proxy/worker):
-  let GUIDE_ENDPOINT  = "https://n8n.srv1000189.hstgr.cloud/webhook/mb/guia";
-  let TICKET_ENDPOINT = "https://n8n.srv1000189.hstgr.cloud/webhook/mb/chamado";
+  // Default (PRODUÇÃO): /webhook
+  const DEFAULT_GUIDE  = "https://n8n.srv1000189.hstgr.cloud/webhook/mb/guia";
+  const DEFAULT_TICKET = "https://n8n.srv1000189.hstgr.cloud/webhook/mb/chamado";
 
-  // ✅ OPÇÃO A: configurar via URL (sem editar código):
-  // https://seu-site.github.io/.../?guide=URL_DO_GUIA&ticket=URL_DO_CHAMADO
-  (function hydrateEndpointsFromQuery(){
-    const qs = new URLSearchParams(location.search);
-    const g = qs.get("guide");
-    const t = qs.get("ticket");
-    if (g) GUIDE_ENDPOINT = decodeURIComponent(g);
-    if (t) TICKET_ENDPOINT = decodeURIComponent(t);
-  })();
+  // Permite sobrescrever via querystring:
+  // ?guide=https://.../webhook/mb/guia&ticket=https://.../webhook/mb/chamado
+  const qs = new URLSearchParams(location.search);
+  let GUIDE_ENDPOINT  = qs.get("guide")  || DEFAULT_GUIDE;
+  let TICKET_ENDPOINT = qs.get("ticket") || DEFAULT_TICKET;
 
-  // ========= Helpers UI =========
   const chatEl = document.getElementById("chat");
   const modalWrap = document.getElementById("modalWrap");
   const closeModalBtn = document.getElementById("closeModalBtn");
@@ -349,12 +320,8 @@
       .replaceAll("'","&#039;");
   }
 
-  function addBot(text){
-    return addRow("bot", `<div>${escapeHtml(text)}</div>`);
-  }
-  function addUser(text){
-    return addRow("user", `<div>${escapeHtml(text)}</div>`);
-  }
+  function addBot(text){ return addRow("bot", `<div>${escapeHtml(text)}</div>`); }
+  function addUser(text){ return addRow("user", `<div>${escapeHtml(text)}</div>`); }
 
   function addChips(role, title, chips){
     const bubble = addRow(role, `
@@ -381,11 +348,7 @@
     `);
   }
 
-  // ========= API Helpers =========
   async function postJSON(url, payload){
-    if(!url){
-      return { ok:false, status:0, data:{ error:"Endpoint não configurado (GUIDE/TICKET)." } };
-    }
     const res = await fetch(url, {
       method:"POST",
       headers:{ "Content-Type":"application/json" },
@@ -395,7 +358,6 @@
     return { ok: res.ok, status: res.status, data };
   }
 
-  // ========= Normalizadores =========
   function normalizeTopics(data){
     if(!data) return [];
     if(Array.isArray(data.topics)){
@@ -425,7 +387,6 @@
     return data?.detail || data?.answer_full || data?.answer || "";
   }
 
-  // ========= Fluxo do chat =========
   function start(){
     addBot("Olá! 👋 Eu sou o suporte da More Buzz. Como você quer seguir?");
     addChips("bot", "Escolha uma opção:", [
@@ -448,7 +409,6 @@
     addBot("Certo — me diz o que você quer entender 👇");
     addChips("bot", "Escolha um tema:", CATEGORIES.map(c => ({
       label: c.label,
-      primary:false,
       onClick: () => buildTopicsMenu(c.id, c.label)
     })));
   }
@@ -462,7 +422,7 @@
     });
 
     if(!ok){
-      addBot(`Falha ao carregar perguntas. Erro: ${data?.error || ("HTTP " + (data?.status || "")) || "desconhecido"}`);
+      addBot(`Falha ao carregar perguntas. Status: ${data?.status || ""}`);
       addChips("bot","O que você prefere?",[
         {label:"Tentar de novo", primary:true, onClick:()=> buildTopicsMenu(categoryId, categoryLabel)},
         {label:"Abrir chamado", onClick:()=> openTicketModal()}
@@ -483,7 +443,6 @@
 
     addChips("bot", "Beleza — selecione uma opção:", topics.map(t => ({
       label: t.title,
-      primary:false,
       onClick: () => answerTopic(t.topicId, t.title)
     })));
   }
@@ -566,24 +525,12 @@
     ]);
   }
 
-  // ========= Chamado =========
-  function openTicketModal(){
-    if(!TICKET_ENDPOINT){
-      addBot("Falha ao abrir chamado: Endpoint não configurado (TICKET).");
-      return;
-    }
-    modalWrap.style.display = "flex";
-  }
-  function closeTicketModal(){
-    modalWrap.style.display = "none";
-    ticketForm.reset();
-  }
+  function openTicketModal(){ modalWrap.style.display = "flex"; }
+  function closeTicketModal(){ modalWrap.style.display = "none"; ticketForm.reset(); }
 
   closeModalBtn.onclick = closeTicketModal;
   cancelTicketBtn.onclick = closeTicketModal;
-  modalWrap.addEventListener("click", (e)=>{
-    if(e.target === modalWrap) closeTicketModal();
-  });
+  modalWrap.addEventListener("click", (e)=>{ if(e.target === modalWrap) closeTicketModal(); });
 
   ticketForm.addEventListener("submit", async (e)=>{
     e.preventDefault();
@@ -599,7 +546,6 @@
 
     const formData = new FormData();
     formData.append("data", JSON.stringify(payload));
-
     const file = fd.get("evidencia");
     if(file && file.name) formData.append("evidencia", file);
 
@@ -607,7 +553,6 @@
     const data = await res.json().catch(()=> ({}));
 
     closeTicketModal();
-
     addUser("Abrir chamado");
 
     if(res.ok){
@@ -622,7 +567,6 @@
     ]);
   });
 
-  // start
   start();
 </script>
 </body>
