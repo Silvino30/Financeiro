@@ -136,10 +136,11 @@
     }
     .card h4{ margin:0 0 8px; font-size:14px; color:var(--muted); font-weight:700; letter-spacing:.2px; }
     .card p{ margin:0; color:var(--text); }
-    .divider{
-      height:1px;
-      background:rgba(255,255,255,.08);
-      margin:12px 0;
+    .note{
+      font-size:12px;
+      color:rgba(255,255,255,.65);
+      margin-top:8px;
+      line-height:1.35;
     }
 
     /* Modal */
@@ -220,12 +221,6 @@
       background:rgba(239,68,68,.22);
       border:1px solid rgba(239,68,68,.45);
     }
-    .note{
-      font-size:12px;
-      color:rgba(255,255,255,.65);
-      margin-top:8px;
-      line-height:1.35;
-    }
     @media (max-width:720px){
       .grid{ grid-template-columns:1fr; }
     }
@@ -297,10 +292,13 @@
   </div>
 
 <script>
-  // ========= Endpoints =========
-  // Ajuste se necessário para seus endpoints reais (Cloudflare Worker / n8n).
-  const GUIDE_ENDPOINT  = "https://silvino30.workers.dev/webhook/mb/guia";
-  const TICKET_ENDPOINT = "https://silvino30.workers.dev/webhook/mb/chamado";
+  // ========= Endpoints (troque aqui pelas URLs de PRODUÇÃO) =========
+  // Dica: você pode passar via querystring também:
+  // ?guide=https://.../webhook/mb/guia&ticket=https://.../webhook/mb/chamado
+  const qs = new URLSearchParams(location.search);
+
+  const GUIDE_ENDPOINT  = qs.get("guide")  || "COLE_AQUI_SUA_PROD_URL_DO_N8N_OU_WORKER_PARA_MB_GUIA";
+  const TICKET_ENDPOINT = qs.get("ticket") || "COLE_AQUI_SUA_PROD_URL_DO_N8N_OU_WORKER_PARA_MB_CHAMADO";
 
   // ========= Helpers UI =========
   const chatEl = document.getElementById("chat");
@@ -312,6 +310,15 @@
   function nowTime(){
     const d = new Date();
     return d.toLocaleTimeString("pt-BR", {hour:"2-digit", minute:"2-digit"});
+  }
+
+  function escapeHtml(s){
+    return String(s ?? "")
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;")
+      .replaceAll("'","&#039;");
   }
 
   function addRow(role, html){
@@ -367,28 +374,35 @@
     `);
   }
 
-  function escapeHtml(s){
-    return String(s ?? "")
-      .replaceAll("&","&amp;")
-      .replaceAll("<","&lt;")
-      .replaceAll(">","&gt;")
-      .replaceAll('"',"&quot;")
-      .replaceAll("'","&#039;");
-  }
-
-  // ========= API Helpers =========
+  // ========= API Helpers (com debug visível) =========
   async function postJSON(url, payload){
-    const res = await fetch(url, {
-      method:"POST",
-      headers:{ "Content-Type":"application/json" },
-      body: JSON.stringify(payload)
-    });
-    const data = await res.json().catch(()=> ({}));
-    return { ok: res.ok, status: res.status, data };
+    console.log("[POST]", url, payload);
+
+    // valida endpoint (evita “silêncio”)
+    if(!url || url.includes("COLE_AQUI")){
+      return { ok:false, status:0, data:{}, err:"Endpoint não configurado (GUIDE/TICKET)." };
+    }
+
+    try{
+      const res = await fetch(url, {
+        method:"POST",
+        headers:{ "Content-Type":"application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      const text = await res.text();
+      let data = {};
+      try{ data = text ? JSON.parse(text) : {}; } catch { data = { raw:text }; }
+
+      console.log("[RESP]", res.status, data);
+      return { ok: res.ok, status: res.status, data };
+    }catch(err){
+      console.error("[FETCH ERROR]", err);
+      return { ok:false, status:0, data:{}, err: err.message || String(err) };
+    }
   }
 
-  // ========= Normalizadores (tolerância ao back atual) =========
-  // list_topics: aceita {topics:[{topicId,title}]} OU {options:[{id,label}]}
+  // ========= Normalizadores =========
   function normalizeTopics(data){
     if(!data) return [];
     if(Array.isArray(data.topics)){
@@ -406,48 +420,30 @@
     return [];
   }
 
-  // answer: aceita {summary, canExpand, question} OU {answer_short/answer_full/resumo_rapido}
   function normalizeAnswer(data){
-    const question =
-      data?.question ||
-      data?.pergunta ||
-      "";
-
+    const question = data?.question || data?.pergunta || "";
     const summary =
+      data?.answer ||
       data?.summary ||
       data?.resumo_rapido ||
       data?.answer_short ||
-      data?.answer ||
       "";
-
     const detail =
       data?.detail ||
       data?.answer_full ||
       "";
-
     const canExpand =
       typeof data?.canExpand === "boolean"
         ? data.canExpand
         : !!detail;
-
     return { question, summary, detail, canExpand };
   }
 
-  // expand: aceita {detail} OU {answer_full} OU {answer}
   function normalizeExpand(data){
     return data?.detail || data?.answer_full || data?.answer || "";
   }
 
   // ========= Fluxo do chat =========
-  function start(){
-    addBot("Olá! 👋 Eu sou o suporte da More Buzz. Como você quer seguir?");
-    addChips("bot", "Escolha uma opção:", [
-      { label:"Guia rápido", primary:true, onClick: () => buildGuideMenu() },
-      { label:"Abrir chamado", onClick: () => openTicketModal() },
-    ]);
-  }
-
-  // Categorias (pode continuar fixo no front)
   const CATEGORIES = [
     { id:"campanha", label:"Sobre a campanha" },
     { id:"cadastro_acesso", label:"Cadastro e acesso" },
@@ -457,12 +453,19 @@
     { id:"divulgacao_materiais", label:"Divulgação e materiais" }
   ];
 
+  function start(){
+    addBot("Olá! 👋 Eu sou o suporte da More Buzz. Como você quer seguir?");
+    addChips("bot", "Escolha uma opção:", [
+      { label:"Guia rápido", primary:true, onClick: () => buildGuideMenu() },
+      { label:"Abrir chamado", onClick: () => openTicketModal() },
+    ]);
+  }
+
   function buildGuideMenu(){
     addUser("Guia rápido");
     addBot("Certo — me diz o que você quer entender 👇");
     addChips("bot", "Escolha um tema:", CATEGORIES.map(c => ({
       label: c.label,
-      primary:false,
       onClick: () => buildTopicsMenu(c.id, c.label)
     })));
   }
@@ -470,14 +473,13 @@
   async function buildTopicsMenu(categoryId, categoryLabel){
     addUser(categoryLabel);
 
-    // chama back
-    const { ok, data } = await postJSON(GUIDE_ENDPOINT, {
+    const { ok, status, data, err } = await postJSON(GUIDE_ENDPOINT, {
       action: "list_topics",
       categoryId
     });
 
     if(!ok){
-      addBot("Tive um problema ao carregar as perguntas. Tenta novamente ou abra um chamado.");
+      addBot(`Falha ao carregar perguntas. ${err ? "Erro: "+err : ""} ${status ? "(HTTP "+status+")" : ""}`);
       addChips("bot","O que você prefere?",[
         {label:"Tentar de novo", primary:true, onClick:()=> buildTopicsMenu(categoryId, categoryLabel)},
         {label:"Abrir chamado", onClick:()=> openTicketModal()}
@@ -496,9 +498,8 @@
       return;
     }
 
-    addChips("bot", "Beleza — selecione uma opção:", topics.map(t => ({
+    addChips("bot", "Qual ponto você quer entender?", topics.map(t => ({
       label: t.title,
-      primary:false,
       onClick: () => answerTopic(t.topicId, t.title)
     })));
   }
@@ -506,13 +507,13 @@
   async function answerTopic(topicId, title){
     addUser(title);
 
-    const { ok, data } = await postJSON(GUIDE_ENDPOINT, {
+    const { ok, status, data, err } = await postJSON(GUIDE_ENDPOINT, {
       action: "answer",
       topicId
     });
 
     if(!ok){
-      addBot("Não consegui carregar a resposta agora. Quer abrir um chamado?");
+      addBot(`Falha ao carregar resposta. ${err ? "Erro: "+err : ""} ${status ? "(HTTP "+status+")" : ""}`);
       addChips("bot","Escolha:",[
         {label:"Abrir chamado", primary:true, onClick:()=> openTicketModal()},
         {label:"Voltar ao guia", onClick:()=> buildGuideMenu()}
@@ -539,7 +540,6 @@
   async function expandTopic(topicId, cachedDetail){
     addUser("Detalhar mais");
 
-    // Se já veio detail no "answer", usa direto (economiza chamada)
     if(cachedDetail){
       addCard("Detalhamento", cachedDetail);
       addChips("bot","Mais alguma coisa?",[
@@ -549,13 +549,13 @@
       return;
     }
 
-    const { ok, data } = await postJSON(GUIDE_ENDPOINT, {
+    const { ok, status, data, err } = await postJSON(GUIDE_ENDPOINT, {
       action: "expand",
       topicId
     });
 
     if(!ok){
-      addBot("Não consegui detalhar agora. Quer abrir um chamado?");
+      addBot(`Falha ao detalhar. ${err ? "Erro: "+err : ""} ${status ? "(HTTP "+status+")" : ""}`);
       addChips("bot","Escolha:",[
         {label:"Abrir chamado", primary:true, onClick:()=> openTicketModal()},
         {label:"Voltar ao guia", onClick:()=> buildGuideMenu()}
@@ -597,6 +597,10 @@
     if(e.target === modalWrap) closeTicketModal();
   });
 
+  function onlyDigits(v){
+    return String(v || '').replace(/\D+/g,'');
+  }
+
   ticketForm.addEventListener("submit", async (e)=>{
     e.preventDefault();
 
@@ -604,7 +608,7 @@
     const payload = {
       nomeCompleto: fd.get("nomeCompleto"),
       email: fd.get("email"),
-      telefone: fd.get("telefone"),
+      telefone: onlyDigits(fd.get("telefone")),
       tipoSolicitacao: fd.get("tipoSolicitacao"),
       descricao: fd.get("descricao") || ""
     };
@@ -615,18 +619,31 @@
     const file = fd.get("evidencia");
     if(file && file.name) formData.append("evidencia", file);
 
-    const res = await fetch(TICKET_ENDPOINT, { method:"POST", body: formData });
-    const data = await res.json().catch(()=> ({}));
-
     closeTicketModal();
-
     addUser("Abrir chamado");
 
-    if(res.ok){
-      const protocol = data.ticketId || data.protocolo || data.id || "gerado";
-      addBot(`Chamado registrado com sucesso ✅ Protocolo: ${protocol}`);
-    }else{
-      addBot("Não consegui registrar o chamado agora. Tenta novamente.");
+    if(!TICKET_ENDPOINT || TICKET_ENDPOINT.includes("COLE_AQUI")){
+      addBot("Endpoint do chamado não configurado (TICKET_ENDPOINT).");
+      return;
+    }
+
+    try{
+      console.log("[POST multipart]", TICKET_ENDPOINT, payload);
+      const res = await fetch(TICKET_ENDPOINT, { method:"POST", body: formData });
+      const text = await res.text();
+      let data = {};
+      try{ data = text ? JSON.parse(text) : {}; } catch { data = { raw:text }; }
+
+      if(res.ok){
+        const protocol = data.ticketId || data.protocolo || data.id || "gerado";
+        addBot(`Chamado registrado com sucesso ✅ Protocolo: ${protocol}`);
+      }else{
+        addBot(`Falha ao registrar chamado (HTTP ${res.status}).`);
+        console.log("Resposta erro:", data);
+      }
+    }catch(err){
+      console.error(err);
+      addBot(`Falha ao registrar chamado. Erro: ${err.message || err}`);
     }
 
     addChips("bot","Quer mais alguma coisa?",[
@@ -634,7 +651,6 @@
     ]);
   });
 
-  // start
   start();
 </script>
 </body>
