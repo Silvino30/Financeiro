@@ -1,750 +1,332 @@
-<!doctype html>
-<html lang="pt-BR">
+<!DOCTYPE html>
+<html lang="pt-br">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Suporte More Buzz</title>
-  <style>
-    :root{
-      --bg:#070718;
-      --panel:#0b0b22;
-      --panel2:#0f0f2b;
-      --text:#e8e8ff;
-      --muted:#b7b7d6;
-      --chip:#1a1a3c;
-      --chipBorder:#2a2a55;
-      --accent:#7c3aed;
-      --accent2:#a78bfa;
-      --danger:#ef4444;
-      --ok:#22c55e;
-      --shadow:0 18px 60px rgba(0,0,0,.55);
-      --radius:18px;
-      --radius2:26px;
-      --font: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Noto Sans", "Helvetica Neue", sans-serif;
-    }
-    *{box-sizing:border-box}
-    body{
-      margin:0;
-      font-family:var(--font);
-      background:radial-gradient(1200px 600px at 25% 10%, rgba(124,58,237,.22), transparent 60%),
-                 radial-gradient(900px 500px at 85% 30%, rgba(167,139,250,.18), transparent 55%),
-                 var(--bg);
-      color:var(--text);
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      min-height:100vh;
-      padding:22px;
-    }
-    .app{
-      width:min(1100px, 100%);
-      height:min(760px, calc(100vh - 44px));
-      background:linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
-      border:1px solid rgba(255,255,255,.08);
-      border-radius:var(--radius2);
-      box-shadow:var(--shadow);
-      overflow:hidden;
-      display:flex;
-      flex-direction:column;
-    }
-    .header{
-      padding:18px 22px;
-      background:linear-gradient(90deg, rgba(124,58,237,.35), rgba(0,0,0,0));
-      border-bottom:1px solid rgba(255,255,255,.08);
-      display:flex;
-      align-items:center;
-      gap:12px;
-    }
-    .logo{
-      width:40px;height:40px;border-radius:14px;
-      background:radial-gradient(circle at 30% 30%, #fbbf24, transparent 55%),
-                 radial-gradient(circle at 70% 70%, #7c3aed, #3b0764);
-      display:grid;place-items:center;
-      font-weight:800;
-      letter-spacing:.5px;
-    }
-    .title{ font-size:18px; font-weight:700; }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Relatório Master – Controladoria</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        /* CONFIGURAÇÃO BASE */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background-color: #f1f5f9; font-family: 'Lato', sans-serif; overflow: hidden; color: #1e293b; }
+        
+        .presentation-wrapper { width: 100vw; height: 100vh; display: flex; align-items: center; justify-content: center; position: relative; }
 
-    .chat{
-      padding:18px;
-      flex:1;
-      overflow:auto;
-      background:linear-gradient(180deg, rgba(15,15,43,.55), rgba(8,8,24,.65));
-    }
+        .slide {
+            display: none; width: 1280px; height: 720px; background: #ffffff;
+            position: relative; overflow: hidden; flex-direction: column;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.1); padding: 60px;
+            animation: fadeIn 0.4s ease-out; border: 1px solid #e2e8f0;
+        }
 
-    .row{ display:flex; gap:10px; margin:10px 0; align-items:flex-end; }
-    .row.bot{ justify-content:flex-start; }
-    .row.user{ justify-content:flex-end; }
-    .bubble{
-      max-width:min(680px, 92%);
-      background:rgba(255,255,255,.06);
-      border:1px solid rgba(255,255,255,.08);
-      border-radius:16px;
-      padding:12px 14px;
-      line-height:1.35;
-      color:var(--text);
-      backdrop-filter: blur(10px);
-    }
-    .row.user .bubble{
-      background:linear-gradient(180deg, rgba(124,58,237,.85), rgba(124,58,237,.55));
-      border-color:rgba(167,139,250,.45);
-    }
-    .time{ font-size:12px; color:rgba(255,255,255,.55); margin:0 6px 2px; }
+        .slide.active { display: flex; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-    .chips{ display:flex; flex-wrap:wrap; gap:10px; margin-top:10px; }
-    .chip{
-      border:1px solid rgba(255,255,255,.12);
-      background:rgba(255,255,255,.04);
-      color:var(--text);
-      padding:10px 14px;
-      border-radius:999px;
-      cursor:pointer;
-      user-select:none;
-      transition:.15s ease;
-      font-weight:600;
-      font-size:14px;
-    }
-    .chip:hover{
-      transform:translateY(-1px);
-      border-color:rgba(167,139,250,.55);
-      background:rgba(124,58,237,.10);
-    }
-    .chip.primary{
-      background:rgba(124,58,237,.20);
-      border-color:rgba(167,139,250,.45);
-    }
+        /* DESIGN ELEMENT */
+        .slide::after { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 6px; background: #24B47E; }
 
-    .card{
-      background:rgba(255,255,255,.04);
-      border:1px solid rgba(255,255,255,.08);
-      border-radius:18px;
-      padding:14px;
-      margin-top:10px;
-    }
-    .card h4{ margin:0 0 8px; font-size:14px; color:var(--muted); font-weight:700; letter-spacing:.2px; }
-    .card p{ margin:0; color:var(--text); }
+        /* TIPOGRAFIA */
+        h1, h2, h3 { font-family: 'Poppins', sans-serif; color: #0f172a; }
+        .slide-title { font-size: 36px; font-weight: 700; margin-bottom: 30px; border-bottom: 2px solid #f1f5f9; padding-bottom: 15px; color: #1e293b; display: flex; align-items: center; gap: 15px; }
+        .slide-title i { color: #24B47E; }
 
-    /* ✅ Composer dentro da app */
-    .composer{
-      border-top:1px solid rgba(255,255,255,.08);
-      background:linear-gradient(180deg, rgba(11,11,34,.95), rgba(7,7,24,.95));
-      padding:12px 14px;
-      display:flex;
-      gap:10px;
-      align-items:center;
-    }
-    .composer input{
-      flex:1;
-      border-radius:14px;
-      border:1px solid rgba(255,255,255,.12);
-      background:rgba(255,255,255,.05);
-      color:var(--text);
-      padding:12px 12px;
-      outline:none;
-      font-family:var(--font);
-    }
-    .composer button{
-      border:none;
-      border-radius:14px;
-      padding:12px 14px;
-      font-weight:800;
-      cursor:pointer;
-      color:var(--text);
-      background:linear-gradient(180deg, rgba(124,58,237,.95), rgba(124,58,237,.65));
-      border:1px solid rgba(167,139,250,.45);
-      white-space:nowrap;
-    }
-    .composer button:disabled{
-      opacity:.55;
-      cursor:not-allowed;
-    }
+        /* NAVEGAÇÃO */
+        .nav-controls { position: fixed; bottom: 30px; right: 50px; display: flex; gap: 15px; z-index: 100; }
+        .nav-btn { background: #ffffff; border: 1px solid #e2e8f0; width: 45px; height: 45px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #64748b; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .nav-btn:hover { background: #24B47E; color: white; border-color: #24B47E; }
+        .slide-counter { position: fixed; bottom: 45px; left: 50px; font-size: 14px; color: #94a3b8; font-weight: 700; }
 
-    .modalWrap{
-      position:fixed; inset:0;
-      display:none;
-      background:rgba(0,0,0,.55);
-      align-items:center;
-      justify-content:center;
-      padding:22px;
-      z-index:50;
-    }
-    .modal{
-      width:min(720px, 100%);
-      background:linear-gradient(180deg, rgba(15,15,43,.98), rgba(10,10,28,.98));
-      border:1px solid rgba(255,255,255,.10);
-      border-radius:22px;
-      box-shadow:var(--shadow);
-      overflow:hidden;
-    }
-    .modalHeader{
-      padding:16px 18px;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      border-bottom:1px solid rgba(255,255,255,.08);
-      background:linear-gradient(90deg, rgba(124,58,237,.30), rgba(0,0,0,0));
-    }
-    .modalHeader strong{ font-size:15px }
-    .closeBtn{
-      border:none;
-      background:rgba(255,255,255,.08);
-      color:var(--text);
-      width:36px;height:36px;
-      border-radius:12px;
-      cursor:pointer;
-      font-size:18px;
-    }
-    .modalBody{ padding:16px 18px; }
-    .grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
-    .field{ display:flex; flex-direction:column; gap:6px; }
-    label{ font-size:13px; color:var(--muted); font-weight:700; }
-    input, select, textarea{
-      border-radius:14px;
-      border:1px solid rgba(255,255,255,.12);
-      background:rgba(255,255,255,.05);
-      color:var(--text);
-      padding:10px 12px;
-      outline:none;
-      font-family:var(--font);
-    }
-    textarea{ min-height:110px; resize:vertical; }
-    .modalFooter{
-      padding:14px 18px;
-      border-top:1px solid rgba(255,255,255,.08);
-      display:flex;
-      gap:10px;
-      justify-content:flex-end;
-    }
-    .btn{
-      border:none;
-      border-radius:14px;
-      padding:10px 14px;
-      font-weight:800;
-      cursor:pointer;
-      color:var(--text);
-      background:rgba(255,255,255,.10);
-    }
-    .btn.primary{
-      background:linear-gradient(180deg, rgba(124,58,237,.95), rgba(124,58,237,.65));
-      border:1px solid rgba(167,139,250,.45);
-    }
-    .btn.danger{
-      background:rgba(239,68,68,.22);
-      border:1px solid rgba(239,68,68,.45);
-    }
-    .note{
-      font-size:12px;
-      color:rgba(255,255,255,.65);
-      margin-top:8px;
-      line-height:1.35;
-    }
-    @media (max-width:720px){
-      .grid{ grid-template-columns:1fr; }
-    }
-  </style>
+        /* COMPONENTES DE GRÁFICO (CSS BARS) - AJUSTADO PARA NÃO COBRIR TÍTULOS */
+        .chart-area { 
+            flex-grow: 1; 
+            display: flex; 
+            align-items: flex-end; 
+            justify-content: space-around; 
+            padding: 20px 100px 20px; 
+            border-bottom: 2px solid #f1f5f9; 
+            position: relative; 
+            margin-bottom: 30px;
+            height: 350px; /* Limite de altura fixo */
+        }
+        .bar-group { display: flex; flex-direction: column; align-items: center; width: 120px; gap: 10px; }
+        .bar-pill { width: 70px; background: #e2e8f0; border-radius: 4px 4px 0 0; position: relative; transition: height 0.6s ease-in-out; }
+        .bar-pill.emerald { background: #24B47E; }
+        .bar-pill::after { 
+            content: attr(data-value); 
+            position: absolute; 
+            top: -25px; 
+            left: 50%; 
+            transform: translateX(-50%); 
+            font-weight: 700; 
+            color: #1e293b; 
+            font-size: 13px; 
+            white-space: nowrap; 
+        }
+        .bar-label { font-size: 15px; font-weight: 600; color: #64748b; margin-top: 5px; }
+
+        /* LAYOUTS */
+        .two-column { display: grid; grid-template-columns: 1fr 1fr; gap: 50px; height: 100%; align-items: center; }
+        .number-card { background: #f8fafc; border: 1px solid #e2e8f0; padding: 25px; border-radius: 8px; margin-bottom: 15px; }
+        .number-card .label { font-size: 12px; color: #64748b; text-transform: uppercase; font-weight: 700; letter-spacing: 1px; }
+        .number-card .value { font-size: 38px; font-weight: 700; color: #1e293b; margin: 5px 0; }
+
+        /* TABELA TOP 5 */
+        table { width: 100%; border-collapse: collapse; }
+        th { background: #f8fafc; color: #64748b; text-align: left; padding: 18px; font-size: 12px; text-transform: uppercase; border-bottom: 2px solid #e2e8f0; }
+        td { padding: 15px 18px; border-bottom: 1px solid #f1f5f9; font-size: 15px; color: #334155; }
+
+        /* PLANO DE AÇÃO (GRID) */
+        .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .action-item { background: #ffffff; border: 1px solid #e2e8f0; padding: 20px; border-radius: 8px; border-left: 4px solid #24B47E; }
+        .action-item h4 { font-size: 17px; margin-bottom: 8px; color: #0f172a; }
+        .action-item p { font-size: 14px; color: #64748b; line-height: 1.4; }
+
+        .warning-footer { background: #fff1f2; border: 1px solid #fecdd3; padding: 15px; border-radius: 8px; margin-top: auto; display: flex; align-items: center; gap: 15px; }
+        .warning-footer i { color: #e11d48; font-size: 20px; }
+
+        /* PRINT */
+        @media print {
+            .nav-controls, .slide-counter { display: none !important; }
+            body { background: white; overflow: visible; }
+            .presentation-wrapper { display: block; height: auto; }
+            .slide { display: flex !important; page-break-after: always; box-shadow: none; border: 1px solid #eee; margin-bottom: 0; width: 100%; }
+        }
+    </style>
 </head>
 <body>
-  <div class="app">
-    <div class="header">
-      <div class="logo">mb</div>
-      <div class="title">Suporte More Buzz</div>
-    </div>
 
-    <div id="chat" class="chat"></div>
-
-    <!-- ✅ Input fixo no rodapé (dentro do app) -->
-    <div class="composer">
-      <input id="msgInput" placeholder="Digite sua dúvida (ex.: como resgatar recompensas?)" />
-      <button id="sendBtn">Enviar</button>
-    </div>
-  </div>
-
-  <div id="modalWrap" class="modalWrap">
-    <div class="modal">
-      <div class="modalHeader">
-        <strong>Abertura de Chamado</strong>
-        <button class="closeBtn" id="closeModalBtn">×</button>
-      </div>
-      <form id="ticketForm">
-        <div class="modalBody">
-          <div class="grid">
-            <div class="field">
-              <label>Nome completo</label>
-              <input name="nomeCompleto" required />
-            </div>
-            <div class="field">
-              <label>E-mail</label>
-              <input name="email" type="email" required />
-            </div>
-            <div class="field">
-              <label>Telefone</label>
-              <input name="telefone" required />
-            </div>
-            <div class="field">
-              <label>Tipo de solicitação</label>
-              <select name="tipoSolicitacao" required>
-                <option value="">Selecione</option>
-                <option value="duvida">Dúvida</option>
-                <option value="erro">Erro</option>
-                <option value="acesso">Acesso</option>
-                <option value="pagamento">Pagamento</option>
-                <option value="outro">Outro</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="field" style="margin-top:12px;">
-            <label>Descrição</label>
-            <textarea name="descricao" placeholder="Descreva o que está acontecendo (passo a passo)"></textarea>
-            <div class="note">Se tiver evidência (print, vídeo, arquivo), envie abaixo.</div>
-          </div>
-
-          <div class="field" style="margin-top:10px;">
-            <label>Evidência (opcional)</label>
-            <input name="evidencia" type="file" />
-          </div>
+<div class="presentation-wrapper">
+    <!-- SLIDE 1: CAPA -->
+    <div class="slide active" id="slide-1">
+        <div style="height: 100%; display: flex; flex-direction: column; justify-content: center;">
+            <div style="width: 80px; height: 8px; background: #24B47E; margin-bottom: 30px;"></div>
+            <h2 style="font-weight: 300; color: #64748b; letter-spacing: 2px;">RELATÓRIO MASTER – CONTROLADORIA</h2>
+            <h1 style="font-size: 72px; line-height: 1.1; margin: 10px 0 30px;">Análise de Carteira e Risco Financeiro</h1>
+            <p style="font-size: 22px; color: #94a3b8;">Fechamento de Exercício e Projeções 2026</p>
         </div>
-
-        <div class="modalFooter">
-          <button type="button" class="btn danger" id="cancelTicketBtn">Cancelar</button>
-          <button type="submit" class="btn primary">Enviar chamado</button>
-        </div>
-      </form>
     </div>
-  </div>
+
+    <!-- SLIDE 2: VISÃO GERAL -->
+    <div class="slide" id="slide-2">
+        <h2 class="slide-title"><i class="fa-solid fa-gauge-high"></i> Visão Geral da Carteira</h2>
+        <div class="content-area">
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 25px;">
+                <div class="number-card">
+                    <span class="label">Carteira Total</span>
+                    <div class="value">R$ 20.47M</div>
+                </div>
+                <div class="number-card">
+                    <span class="label">Aging Médio</span>
+                    <div class="value">258 dias</div>
+                </div>
+                <div class="number-card">
+                    <span class="label">Concentração Top 10</span>
+                    <div class="value">54.38%</div>
+                </div>
+            </div>
+            <div style="margin-top: 40px; background: #f8fafc; padding: 35px; border-radius: 12px; border-left: 8px solid #0f172a;">
+                <h3 style="margin-bottom: 10px;">Resumo Executivo</h3>
+                <p style="font-size: 19px; line-height: 1.5; color: #475569;">O crescimento acelerado em 2025 impactou o aging médio ponderado. A controladoria foca agora na validação dos recebíveis e gestão da inadimplência estrutural.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- SLIDE 3: EVOLUÇÃO (ESCALA AJUSTADA) -->
+    <div class="slide" id="slide-3">
+        <h2 class="slide-title"><i class="fa-solid fa-chart-column"></i> Evolução Histórica da Carteira</h2>
+        <div class="chart-area" style="height: 380px;">
+            <div class="bar-group">
+                <div class="bar-pill" style="height: 70px;" data-value="R$ 2.50M"></div>
+                <span class="bar-label">2023</span>
+            </div>
+            <div class="bar-group">
+                <div class="bar-pill" style="height: 120px;" data-value="R$ 4.41M"></div>
+                <span class="bar-label">2024</span>
+            </div>
+            <div class="bar-group">
+                <div class="bar-pill emerald" style="height: 280px;" data-value="R$ 10.42M"></div>
+                <span class="bar-label">2025</span>
+            </div>
+            <div class="bar-group">
+                <div class="bar-pill" style="height: 90px; background: #f1f5f9; border: 2px dashed #cbd5e1;" data-value="R$ 3.13M"></div>
+                <span class="bar-label">2026 (YTD)</span>
+            </div>
+        </div>
+        <p style="text-align: center; color: #94a3b8; font-size: 14px;">*O salto de 136% em 2025 exige revisão de processos de faturamento e baixa.</p>
+    </div>
+
+    <!-- SLIDE 4: AGING ESTRUTURAL (ESCALA AJUSTADA) -->
+    <div class="slide" id="slide-4">
+        <h2 class="slide-title"><i class="fa-solid fa-clock-rotate-left"></i> Envelhecimento Estrutural (>360 dias)</h2>
+        <div class="two-column">
+            <div>
+                <div class="chart-area" style="padding: 10px; height: 300px; margin: 0; border-bottom: none;">
+                    <div class="bar-group" style="width: 70px;"><div class="bar-pill" style="height: 140px; background: #ef4444;" data-value="R$ 2.50M"></div><span class="bar-label">23</span></div>
+                    <div class="bar-group" style="width: 70px;"><div class="bar-pill" style="height: 240px; background: #ef4444;" data-value="R$ 4.21M"></div><span class="bar-label">24</span></div>
+                    <div class="bar-group" style="width: 70px;"><div class="bar-pill" style="height: 15px; background: #24B47E;" data-value="R$ 0.13M"></div><span class="bar-label">25</span></div>
+                </div>
+            </div>
+            <div>
+                <h3 style="color: #ef4444; margin-bottom: 15px;">Exposição Crítica</h3>
+                <p style="font-size: 16px; color: #475569; margin-bottom: 20px;">Concentração massiva em 2023/2024 exige ação de PDD.</p>
+                <div style="background: #fef2f2; border: 1px solid #fecdd3; padding: 25px; border-radius: 8px;">
+                    <span style="font-size: 12px; font-weight: 700; color: #b91c1c; text-transform: uppercase;">Total Acumulado:</span>
+                    <div style="font-size: 32px; font-weight: 700; color: #b91c1c;">R$ 6.857.605,42</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SLIDE 5: PROJEÇÃO 2026 (ESCALA AJUSTADA) -->
+    <div class="slide" id="slide-5">
+        <h2 class="slide-title"><i class="fa-solid fa-chart-line"></i> Projeção e Cenários 2026</h2>
+        <div class="chart-area" style="height: 300px;">
+             <div class="bar-group">
+                <div class="bar-pill" style="height: 180px; background: #94a3b8;" data-value="R$ 10.42M"></div>
+                <span class="bar-label">Real 2025</span>
+            </div>
+            <div class="bar-group">
+                <div class="bar-pill emerald" style="height: 250px;" data-value="R$ 14.27M"></div>
+                <span class="bar-label">Proj. 2026</span>
+            </div>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 30px;">
+            <div style="text-align: center; border: 1px solid #eee; padding: 15px; border-radius: 6px;">
+                <span style="font-size: 11px; color: #94a3b8;">CONSERVADOR</span>
+                <div style="font-weight: 700; font-size: 18px;">R$ 12.13M</div>
+            </div>
+            <div style="text-align: center; border: 2px solid #24B47E; padding: 15px; border-radius: 6px;">
+                <span style="font-size: 11px; color: #24B47E; font-weight: 700;">MODERADO</span>
+                <div style="font-weight: 700; font-size: 18px;">R$ 14.27M</div>
+            </div>
+            <div style="text-align: center; border: 1px solid #eee; padding: 15px; border-radius: 6px;">
+                <span style="font-size: 11px; color: #94a3b8;">AGRESSIVO</span>
+                <div style="font-weight: 700; font-size: 18px;">R$ 16.41M</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SLIDE 6: TOP 5 CLIENTES -->
+    <div class="slide" id="slide-6">
+        <h2 class="slide-title"><i class="fa-solid fa-crown"></i> Top 5 Concentração de Carteira</h2>
+        <div class="content-area">
+            <table>
+                <thead>
+                    <tr><th>Cliente</th><th style="text-align: right;">Valor Total (R$)</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>VERDECO IND. COM. E IMPORT DE ARTEFATOS</td><td style="text-align: right; font-weight: 700;">3.871.266,78</td></tr>
+                    <tr><td>LEROY MERLIN COMPANHIA BRASILEIRA</td><td style="text-align: right; font-weight: 700;">2.316.653,74</td></tr>
+                    <tr><td>AMAZON SERVICOS DE VAREJO DO BRASIL LTDA</td><td style="text-align: right; font-weight: 700;">1.614.700,11</td></tr>
+                    <tr><td>PALASH INDÚSTRIA E COMÉRCIO</td><td style="text-align: right;">804,564,26</td></tr>
+                    <tr><td>SODIMAC S.A.</td><td style="text-align: right;">675,576,02</td></tr>
+                </tbody>
+            </table>
+            <div style="margin-top: 25px; padding: 20px; border-top: 2px solid #24B47E; background: #f8fafc; font-size: 16px;">
+                <strong>Nota:</strong> Estes 5 devedores compõem cerca de <strong>45% do saldo devedor total</strong>.
+            </div>
+        </div>
+    </div>
+
+    <!-- SLIDE 7: SIMULAÇÃO PDD -->
+    <div class="slide" id="slide-7">
+        <h2 class="slide-title"><i class="fa-solid fa-calculator"></i> Provisão para Devedores Duvidosos (PDD)</h2>
+        <div class="content-area">
+            <p style="font-size: 17px; color: #64748b; margin-bottom: 25px;">Base de cálculo (>360 dias): <strong>R$ 6.857.605,42</strong></p>
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px;">
+                <div style="padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;">
+                    <h3 style="font-size: 16px; color: #64748b;">PDD 50%</h3>
+                    <div style="font-size: 24px; font-weight: 700; margin: 10px 0;">R$ 3.42M</div>
+                    <p style="font-size: 13px; color: #94a3b8;">Impacto moderado no resultado líquido.</p>
+                </div>
+                <div style="padding: 20px; border: 2px solid #f59e0b; background: #fffbeb; border-radius: 8px;">
+                    <h3 style="font-size: 16px; color: #b45309;">PDD 70% (RECOM.)</h3>
+                    <div style="font-size: 24px; font-weight: 700; color: #b45309; margin: 10px 0;">R$ 4.80M</div>
+                    <p style="font-size: 13px; color: #b45309;"><strong>Recomendação técnica</strong> para segurança contábil.</p>
+                </div>
+                <div style="padding: 20px; border: 1px solid #ef4444; border-radius: 8px;">
+                    <h3 style="font-size: 16px; color: #ef4444;">PDD 90%</h3>
+                    <div style="font-size: 24px; font-weight: 700; color: #ef4444; margin: 10px 0;">R$ 6.17M</div>
+                    <p style="font-size: 13px; color: #94a3b8;">Limpeza total de títulos incobráveis.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SLIDE 8: PLANO DE AÇÃO -->
+    <div class="slide" id="slide-8">
+        <h2 class="slide-title"><i class="fa-solid fa-shield-check"></i> Governança e Plano de Ação</h2>
+        <div class="content-area">
+            <div class="action-grid">
+                <div class="action-item">
+                    <h4>Auditoria de Conciliação</h4>
+                    <p>Realização de auditoria urgente para verificar pagamentos não baixados no ERP antes de decisões contábeis.</p>
+                </div>
+                <div class="action-item">
+                    <h4>Revisão de Crédito</h4>
+                    <p>Ajuste imediato nos limites de crédito para clientes com aging estrutural acumulado.</p>
+                </div>
+                <div class="action-item">
+                    <h4>Comitê Mensal de Risco</h4>
+                    <p>Instituição de reunião mensal obrigatória para revisão dos 20 maiores devedores da companhia.</p>
+                </div>
+                <div class="action-item">
+                    <h4>Dashboard Executivo</h4>
+                    <p>Monitoramento contínuo em tempo real para visualização de quebras de régua de cobrança.</p>
+                </div>
+            </div>
+            <div class="warning-footer">
+                <i class="fa-solid fa-circle-info"></i>
+                <p><strong>Atenção:</strong> A auditoria de conciliação é a prioridade #1 para garantir a saúde do EBITDA.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- SLIDE 9: CONCLUSÃO -->
+    <div class="slide" id="slide-9">
+        <div style="height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;">
+            <div style="width: 60px; height: 8px; background: #24B47E; margin-bottom: 30px;"></div>
+            <h1 style="font-size: 56px;">Próximos Passos</h1>
+            <p style="font-size: 22px; color: #94a3b8; max-width: 750px; margin-top: 15px;">
+                Aprovação da simulação de PDD em 70% e início da força-tarefa de conciliação.
+            </p>
+            <div style="margin-top: 50px; color: #cbd5e1; font-weight: 700; letter-spacing: 2px; font-size: 14px;">CONTROLADORIA 2026</div>
+        </div>
+    </div>
+</div>
+
+<!-- CONTROLES -->
+<div class="slide-counter"><span id="current-slide">1</span> / 9</div>
+<div class="nav-controls">
+    <button class="nav-btn" onclick="prevSlide()"><i class="fa-solid fa-chevron-left"></i></button>
+    <button class="nav-btn" onclick="nextSlide()"><i class="fa-solid fa-chevron-right"></i></button>
+</div>
 
 <script>
-  // ========= Endpoints =========
-  const DEFAULT_GUIDE  = "https://n8n.srv1000189.hstgr.cloud/webhook/mb/guia";
-  const DEFAULT_TICKET = "https://n8n.srv1000189.hstgr.cloud/webhook/mb/chamado";
+    let currentSlide = 1;
+    const totalSlides = 9;
 
-  const qs = new URLSearchParams(location.search);
-  let GUIDE_ENDPOINT  = qs.get("guide")  || DEFAULT_GUIDE;
-  let TICKET_ENDPOINT = qs.get("ticket") || DEFAULT_TICKET;
-
-  const chatEl = document.getElementById("chat");
-  const modalWrap = document.getElementById("modalWrap");
-  const closeModalBtn = document.getElementById("closeModalBtn");
-  const cancelTicketBtn = document.getElementById("cancelTicketBtn");
-  const ticketForm = document.getElementById("ticketForm");
-  const msgInput = document.getElementById("msgInput");
-  const sendBtn  = document.getElementById("sendBtn");
-
-  let isSearching = false;
-  let isLoadingGuide = false;
-
-  function nowTime(){
-    const d = new Date();
-    return d.toLocaleTimeString("pt-BR", {hour:"2-digit", minute:"2-digit"});
-  }
-
-  function addRow(role, html){
-    const row = document.createElement("div");
-    row.className = "row " + role;
-    const bubble = document.createElement("div");
-    bubble.className = "bubble";
-    bubble.innerHTML = html;
-    const time = document.createElement("div");
-    time.className = "time";
-    time.textContent = nowTime();
-    if(role === "bot"){
-      row.appendChild(bubble);
-      row.appendChild(time);
-    }else{
-      row.appendChild(time);
-      row.appendChild(bubble);
+    function showSlide(n) {
+        const slides = document.querySelectorAll('.slide');
+        if (n > totalSlides) currentSlide = 1;
+        if (n < 1) currentSlide = totalSlides;
+        
+        slides.forEach(s => s.classList.remove('active'));
+        document.getElementById(`slide-${currentSlide}`).classList.add('active');
+        document.getElementById('current-slide').innerText = currentSlide;
     }
-    chatEl.appendChild(row);
-    chatEl.scrollTop = chatEl.scrollHeight;
-    return bubble;
-  }
 
-  function escapeHtml(s){
-    return String(s ?? "")
-      .replaceAll("&","&amp;")
-      .replaceAll("<","&lt;")
-      .replaceAll(">","&gt;")
-      .replaceAll('"',"&quot;")
-      .replaceAll("'","&#039;");
-  }
+    function nextSlide() { currentSlide++; showSlide(currentSlide); }
+    function prevSlide() { currentSlide--; showSlide(currentSlide); }
 
-  function addBot(text){ return addRow("bot", `<div>${escapeHtml(text)}</div>`); }
-  function addUser(text){ return addRow("user", `<div>${escapeHtml(text)}</div>`); }
-
-  function addChips(role, title, chips){
-    const bubble = addRow(role, `
-      <div><strong>${escapeHtml(title)}</strong></div>
-      <div class="chips"></div>
-    `);
-    const chipsEl = bubble.querySelector(".chips");
-    chips.forEach(c => {
-      const btn = document.createElement("div");
-      btn.className = "chip " + (c.primary ? "primary" : "");
-      btn.textContent = c.label;
-      btn.onclick = c.onClick;
-      chipsEl.appendChild(btn);
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowRight' || e.key === ' ') nextSlide();
+        if (e.key === 'ArrowLeft') prevSlide();
     });
-    return bubble;
-  }
-
-  function addCard(title, text){
-    return addRow("bot", `
-      <div class="card">
-        <h4>${escapeHtml(title)}</h4>
-        <p>${escapeHtml(text)}</p>
-      </div>
-    `);
-  }
-
-  async function postJSON(url, payload){
-    const res = await fetch(url, {
-      method:"POST",
-      headers:{ "Content-Type":"application/json" },
-      body: JSON.stringify(payload)
-    });
-    const data = await res.json().catch(()=> ({}));
-    return { ok: res.ok, status: res.status, data };
-  }
-
-  function normalizeCategories(data){
-    if(!data) return [];
-    if(Array.isArray(data.categories)){
-      return data.categories.map(c => ({
-        id: c.id ?? c.categoryId,
-        label: c.label ?? c.title ?? String(c.id ?? c.categoryId ?? "")
-      })).filter(c => c.id);
-    }
-    if(Array.isArray(data.options)){
-      return data.options.map(o => ({
-        id: o.id ?? o.categoryId,
-        label: o.label ?? o.title ?? String(o.id ?? o.categoryId ?? "")
-      })).filter(c => c.id);
-    }
-    return [];
-  }
-
-  function normalizeTopics(data){
-    if(!data) return [];
-    if(Array.isArray(data.topics)){
-      return data.topics.map(t => ({
-        topicId: t.topicId ?? t.id,
-        title: t.title ?? t.label ?? String(t.topicId ?? t.id ?? "")
-      })).filter(t => t.topicId);
-    }
-    if(Array.isArray(data.options)){
-      return data.options.map(o => ({
-        topicId: o.id,
-        title: o.label ?? String(o.id ?? "")
-      })).filter(t => t.topicId);
-    }
-    return [];
-  }
-
-  function normalizeAnswer(data){
-    const question = data?.question || data?.pergunta || "";
-    const summary  = data?.summary || data?.resumo_rapido || data?.answer_short || data?.answer || "";
-    const detail   = data?.detail || data?.answer_full || "";
-    const canExpand = typeof data?.canExpand === "boolean" ? data.canExpand : !!detail;
-    return { question, summary, detail, canExpand };
-  }
-
-  function normalizeExpand(data){
-    return data?.detail || data?.answer_full || data?.answer || "";
-  }
-
-  function normalizeSearch(data){
-    if(!data) return { options: [], confidence: 0 };
-    const options = Array.isArray(data.options) ? data.options : [];
-    return {
-      confidence: Number(data.confidence ?? 0),
-      options: options
-        .map(o => ({
-          topicId: o.id ?? o.topicId,
-          title: o.label ?? o.title ?? String(o.id ?? o.topicId ?? "")
-        }))
-        .filter(o => o.topicId)
-    };
-  }
-
-  function start(){
-    addBot("Olá! 👋 Eu sou o suporte da More Buzz. Como você quer seguir?");
-    addChips("bot", "Escolha uma opção:", [
-      { label:"Guia rápido", primary:true, onClick: () => buildGuideMenu() },
-      { label:"Abrir chamado", onClick: () => openTicketModal() },
-    ]);
-  }
-
-  async function buildGuideMenu(){
-    if(isLoadingGuide) return;
-    isLoadingGuide = true;
-
-    addUser("Guia rápido");
-
-    const { ok, data, status } = await postJSON(GUIDE_ENDPOINT, {
-      action: "list_categories"
-    });
-
-    if(!ok){
-      addBot(`Falha ao carregar temas. Status: ${status}`);
-      addChips("bot","O que você prefere?",[
-        {label:"Tentar de novo", primary:true, onClick:()=> buildGuideMenu()},
-        {label:"Abrir chamado", onClick:()=> openTicketModal()}
-      ]);
-      isLoadingGuide = false;
-      return;
-    }
-
-    const categories = normalizeCategories(data);
-
-    if(!categories.length){
-      addBot("Não encontrei temas disponíveis agora. Quer abrir um chamado?");
-      addChips("bot","Escolha:",[
-        {label:"Abrir chamado", primary:true, onClick:()=> openTicketModal()}
-      ]);
-      isLoadingGuide = false;
-      return;
-    }
-
-    addBot("Certo — me diz o que você quer entender 👇");
-    addChips("bot", "Escolha um tema:", categories.map(c => ({
-      label: c.label,
-      onClick: () => buildTopicsMenu(c.id, c.label)
-    })));
-
-    isLoadingGuide = false;
-  }
-
-  async function buildTopicsMenu(categoryId, categoryLabel){
-    addUser(categoryLabel);
-
-    const { ok, data, status } = await postJSON(GUIDE_ENDPOINT, {
-      action: "list_topics",
-      categoryId
-    });
-
-    if(!ok){
-      addBot(`Falha ao carregar perguntas. Status: ${status}`);
-      addChips("bot","O que você prefere?",[
-        {label:"Tentar de novo", primary:true, onClick:()=> buildTopicsMenu(categoryId, categoryLabel)},
-        {label:"Abrir chamado", onClick:()=> openTicketModal()}
-      ]);
-      return;
-    }
-
-    const topics = normalizeTopics(data);
-
-    if(!topics.length){
-      addBot("Não encontrei perguntas nesse tema (ou a base retornou um formato diferente). Quer abrir um chamado?");
-      addChips("bot","Escolha:",[
-        {label:"Abrir chamado", primary:true, onClick:()=> openTicketModal()},
-        {label:"Voltar ao guia", onClick:()=> buildGuideMenu()}
-      ]);
-      return;
-    }
-
-    addChips("bot", "Beleza — selecione uma opção:", topics.map(t => ({
-      label: t.title,
-      onClick: () => answerTopic(t.topicId, t.title)
-    })));
-  }
-
-  async function answerTopic(topicId, title){
-    addUser(title);
-
-    const { ok, data } = await postJSON(GUIDE_ENDPOINT, {
-      action: "answer",
-      topicId
-    });
-
-    if(!ok){
-      addBot("Não consegui carregar a resposta agora. Quer abrir um chamado?");
-      addChips("bot","Escolha:",[
-        {label:"Abrir chamado", primary:true, onClick:()=> openTicketModal()},
-        {label:"Voltar ao guia", onClick:()=> buildGuideMenu()}
-      ]);
-      return;
-    }
-
-    const { question, summary, detail, canExpand } = normalizeAnswer(data);
-
-    if(question) addCard("Pergunta", question);
-    if(summary) addCard("Resposta", summary);
-    else addBot("Não encontrei resposta para esse item. Quer abrir um chamado?");
-
-    const chips = [];
-    if(canExpand){
-      chips.push({ label:"Detalhar mais", primary:true, onClick:()=> expandTopic(topicId, detail) });
-    }
-    chips.push({ label:"Resolvido", onClick:()=> resolvedFlow() });
-    chips.push({ label:"Abrir chamado", onClick:()=> openTicketModal() });
-
-    addChips("bot", "Como você quer seguir?", chips);
-  }
-
-  async function expandTopic(topicId, cachedDetail){
-    addUser("Detalhar mais");
-
-    if(cachedDetail){
-      addCard("Detalhamento", cachedDetail);
-      addChips("bot","Mais alguma coisa?",[
-        {label:"Voltar ao guia", primary:true, onClick:()=> buildGuideMenu()},
-        {label:"Abrir chamado", onClick:()=> openTicketModal()},
-      ]);
-      return;
-    }
-
-    const { ok, data } = await postJSON(GUIDE_ENDPOINT, {
-      action: "expand",
-      topicId
-    });
-
-    if(!ok){
-      addBot("Não consegui detalhar agora. Quer abrir um chamado?");
-      addChips("bot","Escolha:",[
-        {label:"Abrir chamado", primary:true, onClick:()=> openTicketModal()},
-        {label:"Voltar ao guia", onClick:()=> buildGuideMenu()}
-      ]);
-      return;
-    }
-
-    const detail = normalizeExpand(data);
-    if(detail) addCard("Detalhamento", detail);
-    else addBot("Não encontrei detalhamento para esse item.");
-
-    addChips("bot","Mais alguma coisa?",[
-      {label:"Voltar ao guia", primary:true, onClick:()=> buildGuideMenu()},
-      {label:"Abrir chamado", onClick:()=> openTicketModal()},
-    ]);
-  }
-
-  function resolvedFlow(){
-    addUser("Resolvido");
-    addBot("Perfeito! Se precisar de algo, é só chamar 🙂");
-    addChips("bot","Quer fazer mais alguma coisa?",[
-      {label:"Guia rápido", primary:true, onClick:()=> buildGuideMenu()},
-      {label:"Abrir chamado", onClick:()=> openTicketModal()},
-    ]);
-  }
-
-  function openTicketModal(){ modalWrap.style.display = "flex"; }
-  function closeTicketModal(){ modalWrap.style.display = "none"; ticketForm.reset(); }
-
-  closeModalBtn.onclick = closeTicketModal;
-  cancelTicketBtn.onclick = closeTicketModal;
-  modalWrap.addEventListener("click", (e)=>{ if(e.target === modalWrap) closeTicketModal(); });
-
-  ticketForm.addEventListener("submit", async (e)=>{
-    e.preventDefault();
-
-    const fd = new FormData(ticketForm);
-    const payload = {
-      nomeCompleto: fd.get("nomeCompleto"),
-      email: fd.get("email"),
-      telefone: fd.get("telefone"),
-      tipoSolicitacao: fd.get("tipoSolicitacao"),
-      descricao: fd.get("descricao") || ""
-    };
-
-    const formData = new FormData();
-    formData.append("data", JSON.stringify(payload));
-    const file = fd.get("evidencia");
-    if(file && file.name) formData.append("evidencia", file);
-
-    const res = await fetch(TICKET_ENDPOINT, { method:"POST", body: formData });
-    const data = await res.json().catch(()=> ({}));
-
-    closeTicketModal();
-    addUser("Abrir chamado");
-
-    if(res.ok){
-      const protocol = data.ticketId || data.protocolo || data.id || "gerado";
-      addBot(`Chamado registrado com sucesso ✅ Protocolo: ${protocol}`);
-    }else{
-      addBot("Não consegui registrar o chamado agora. Tenta novamente.");
-    }
-
-    addChips("bot","Quer mais alguma coisa?",[
-      {label:"Guia rápido", primary:true, onClick:()=> buildGuideMenu()},
-    ]);
-  });
-
-  async function searchFAQ(query){
-    const q = String(query || "").trim();
-    if(!q) return;
-
-    if(isSearching) return;
-    isSearching = true;
-    sendBtn.disabled = true;
-
-    addUser(q);
-
-    const { ok, data, status } = await postJSON(GUIDE_ENDPOINT, {
-      action: "search",
-      query: q
-    });
-
-    if(!ok){
-      addBot(`Não consegui pesquisar agora. Status: ${status}`);
-      addChips("bot","Como você quer seguir?",[
-        {label:"Guia rápido", primary:true, onClick:()=> buildGuideMenu()},
-        {label:"Abrir chamado", onClick:()=> openTicketModal()}
-      ]);
-      isSearching = false;
-      sendBtn.disabled = false;
-      return;
-    }
-
-    const { options } = normalizeSearch(data);
-
-    if(!options.length){
-  addBot("Não entendi sua dúvida. Reescreva ou selecione uma das opções abaixo.");
-  addChips("bot","Escolha uma opção:",[
-    {label:"Guia rápido", primary:true, onClick:()=> buildGuideMenu()},
-    {label:"Abrir chamado", onClick:()=> openTicketModal()}
-  ]);
-  isSearching = false;
-  sendBtn.disabled = false;
-  return;
-}
-
-    addBot("Encontrei estes tópicos relacionados 👇");
-    addChips("bot","Selecione uma opção:", options.map(o => ({
-      label: o.title,
-      onClick: () => answerTopic(o.topicId, o.title)
-    })));
-
-    isSearching = false;
-    sendBtn.disabled = false;
-  }
-
-  function handleSend(){
-    const text = (msgInput.value || "").trim();
-    if(!text) return;
-
-    msgInput.value = "";
-
-    if(text === "/guia"){
-      buildGuideMenu();
-      return;
-    }
-    if(text === "/chamado"){
-      openTicketModal();
-      return;
-    }
-
-    searchFAQ(text);
-  }
-
-  sendBtn.addEventListener("click", handleSend);
-  msgInput.addEventListener("keydown", (e)=>{
-    if(e.key === "Enter"){
-      e.preventDefault();
-      handleSend();
-    }
-  });
-
-  start();
-  msgInput.focus();
 </script>
+
 </body>
 </html>
